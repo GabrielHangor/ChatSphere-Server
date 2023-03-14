@@ -1,6 +1,6 @@
-export interface IUser {
-  id?: number;
-  username?: string;
+export interface ILoginUserResponse {
+  jwt: string;
+  id: number;
   email: string;
-  password: string;
+  username: string;
 }

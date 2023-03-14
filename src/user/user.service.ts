@@ -3,13 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './model/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './model/dto/create-user.dto';
-import * as bcrypt from 'bcrypt';
 import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { LoginUserDto } from './model/dto/login-user.dto';
+import { AuthService } from './../auth/auth.service';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
+  constructor(
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    private readonly authService: AuthService
+  ) {}
 
   findAll(options: IPaginationOptions) {
     options.limit = options.limit > 100 ? 100 : options.limit;
@@ -23,7 +26,7 @@ export class UserService {
       throw new HttpException(`Email ${createUserDto.email} already exists`, HttpStatus.CONFLICT);
     }
 
-    const hashedPassword = await this.hashPassword(createUserDto.password);
+    const hashedPassword = await this.authService.hashPassword(createUserDto.password);
 
     const createdUser = this.userRepository.create({
       ...createUserDto,
@@ -42,13 +45,19 @@ export class UserService {
       throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
     }
 
-    const isPasswordValid = await this.validatePassword(loginUserDto.password, foundUser.password);
+    const isPasswordValid = await this.authService.validatePassword(
+      loginUserDto.password,
+      foundUser.password
+    );
 
     if (!isPasswordValid) {
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
     }
 
-    return true;
+    const jwt = await this.authService.generateJwt(foundUser);
+    const { password, id, ...userWithoutPassword } = foundUser;
+
+    return { accessToken: jwt, expiresIn: 10000, tokenType: 'JWT', ...userWithoutPassword };
   }
 
   private findByEmail(email: string) {
@@ -56,13 +65,5 @@ export class UserService {
       where: { email },
       select: ['id', 'email', 'username', 'password'],
     });
-  }
-
-  private hashPassword(password: string) {
-    return bcrypt.hash(password, 12);
-  }
-
-  private validatePassword(password: string, storedPassword: string) {
-    return bcrypt.compare(password, storedPassword);
   }
 }

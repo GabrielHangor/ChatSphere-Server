@@ -7,8 +7,8 @@ import { LoginUserDto } from './../user/model/dto/login-user.dto';
 export class AuthService {
   constructor(private readonly jwtService: JwtService) {}
 
-  generateJwt(loginUserDto: LoginUserDto) {
-    return this.jwtService.signAsync({ user: loginUserDto });
+  generateJwt(user: Partial<LoginUserDto>) {
+    return this.jwtService.signAsync({ user });
   }
 
   hashPassword(password: string) {
@@ -19,3 +19,4 @@ export class AuthService {
     return bcrypt.compare(password, storedPassword);
   }
 }
+

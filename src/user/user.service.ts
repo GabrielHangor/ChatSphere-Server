@@ -53,9 +53,8 @@ export class UserService {
     if (!isPasswordValid) {
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
     }
-
-    const jwt = await this.authService.generateJwt(foundUser);
     const { password, id, ...userWithoutPassword } = foundUser;
+    const jwt = await this.authService.generateJwt(userWithoutPassword);
 
     return { accessToken: jwt, expiresIn: 10000, tokenType: 'JWT', ...userWithoutPassword };
   }

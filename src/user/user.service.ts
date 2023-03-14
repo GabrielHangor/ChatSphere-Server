@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './model/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
+import { LoginUserDto } from './model/dto/login-user.dto';
 
 @Injectable()
 export class UserService {
@@ -16,9 +17,9 @@ export class UserService {
   }
 
   async create(createUserDto: CreateUserDto) {
-    const doesEmailExist = await this.checkIfEmailExists(createUserDto.email);
+    const foundUser = await this.findByEmail(createUserDto.email);
 
-    if (doesEmailExist) {
+    if (foundUser) {
       throw new HttpException(`Email ${createUserDto.email} already exists`, HttpStatus.CONFLICT);
     }
 
@@ -34,11 +35,34 @@ export class UserService {
     return createdUserWithoutPassword;
   }
 
-  private async checkIfEmailExists(email: string) {
-    return this.userRepository.findOne({ where: { email } });
+  async login(loginUserDto: LoginUserDto) {
+    const foundUser = await this.findByEmail(loginUserDto.email);
+
+    if (!foundUser) {
+      throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+    }
+
+    const isPasswordValid = await this.validatePassword(loginUserDto.password, foundUser.password);
+
+    if (!isPasswordValid) {
+      throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
+    }
+
+    return true;
+  }
+
+  private findByEmail(email: string) {
+    return this.userRepository.findOne({
+      where: { email },
+      select: ['id', 'email', 'username', 'password'],
+    });
   }
 
   private hashPassword(password: string) {
     return bcrypt.hash(password, 12);
+  }
+
+  private validatePassword(password: string, storedPassword: string) {
+    return bcrypt.compare(password, storedPassword);
   }
 }

@@ -8,7 +8,7 @@ import { JwtAuthGuard } from './../auth/guards/jwt.guard';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Query('page') page: number, @Query('limit') limit: number) {
     return this.userService.findAll({ page, limit });

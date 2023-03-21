@@ -6,6 +6,7 @@ import { CreateUserDto } from './model/dto/create-user.dto';
 import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { LoginUserDto } from './model/dto/login-user.dto';
 import { AuthService } from './../auth/auth.service';
+import { JWT_LIFESPAN_MS } from './../auth/auth.constants';
 
 @Injectable()
 export class UserService {
@@ -20,10 +21,15 @@ export class UserService {
   }
 
   async create(createUserDto: CreateUserDto) {
-    const foundUser = await this.findByEmail(createUserDto.email);
+    const foundUserByEmail = await this.findByEmail(createUserDto.email);
+    const foundUserByUsername = await this.findByUserName(createUserDto.username);
 
-    if (foundUser) {
+    if (foundUserByEmail) {
       throw new HttpException(`Email ${createUserDto.email} already exists`, HttpStatus.CONFLICT);
+    }
+
+    if (foundUserByUsername) {
+      throw new HttpException(`Username ${createUserDto.username} already exists`, HttpStatus.CONFLICT);
     }
 
     const hashedPassword = await this.authService.hashPassword(createUserDto.password);
@@ -53,15 +59,31 @@ export class UserService {
     if (!isPasswordValid) {
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
     }
-    const { password, id, ...userWithoutPassword } = foundUser;
+    const { password, ...userWithoutPassword } = foundUser;
     const jwt = await this.authService.generateJwt(userWithoutPassword);
 
-    return { accessToken: jwt, expiresIn: 10000, tokenType: 'JWT', ...userWithoutPassword };
+    return {
+      accessToken: jwt,
+      expiresAt: Date.now() + JWT_LIFESPAN_MS,
+      tokenType: 'JWT',
+      ...userWithoutPassword,
+    };
+  }
+
+  public findOne(id: number) {
+    return this.userRepository.findOneOrFail({ where: { id } });
   }
 
   private findByEmail(email: string) {
     return this.userRepository.findOne({
       where: { email },
+      select: ['id', 'email', 'username', 'password'],
+    });
+  }
+
+  private findByUserName(username: string) {
+    return this.userRepository.findOne({
+      where: { username },
       select: ['id', 'email', 'username', 'password'],
     });
   }

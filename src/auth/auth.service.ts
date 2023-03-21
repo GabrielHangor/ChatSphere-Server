@@ -18,5 +18,8 @@ export class AuthService {
   validatePassword(password: string, storedPassword: string) {
     return bcrypt.compare(password, storedPassword);
   }
-}
 
+  verifyJwt(jwt: string) {
+    return this.jwtService.verifyAsync(jwt);
+  }
+}

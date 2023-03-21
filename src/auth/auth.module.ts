@@ -12,7 +12,7 @@ import { JwtAuthGuard } from './guards/jwt.guard';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get('jwtSecret'),
-        signOptions: { expiresIn: '10000s' },
+        signOptions: { expiresIn: '1h' },
       }),
     }),
   ],

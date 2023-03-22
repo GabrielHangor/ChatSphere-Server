@@ -4,10 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import appConfig from 'config/app.config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ChatModule } from './chat/chat.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthMiddleware } from './auth/middleware/auth.middleware';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -24,9 +24,9 @@ import { AuthMiddleware } from './auth/middleware/auth.middleware';
         synchronize: true,
       }),
     }),
-    ChatModule,
     UserModule,
     AuthModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

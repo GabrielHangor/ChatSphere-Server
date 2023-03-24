@@ -9,21 +9,32 @@ import { Socket, Server } from 'socket.io';
 import { AuthService } from './../auth/auth.service';
 import { User } from './../user/model/user.entity';
 import { UserService } from './../user/user.service';
+import { RoomService } from './room.service';
+import { Room } from './model/room.entity';
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection {
   @WebSocketServer() server: Server;
 
-  constructor(private readonly authService: AuthService, private readonly userService: UserService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly userService: UserService,
+    private readonly roomService: RoomService
+  ) {}
 
   async handleConnection(client: Socket) {
     console.log('user connected');
 
     try {
       const decodedToken = await this.authService.verifyJwt(client.handshake.headers.authorization);
-      await this.userService.findOne(decodedToken.user.id);
+      const user = await this.userService.findOne(decodedToken.user.id);
+
+      client.data.user = user;
+
+      const rooms = await this.roomService.getRoomsListForUser(user.id, { page: 1, limit: 10 });
+      this.server.to(client.id).emit('rooms', rooms);
     } catch (e) {
-      ChatGateway.disconnect(client);
+      this.disconnect(client);
     }
   }
 
@@ -36,7 +47,12 @@ export class ChatGateway implements OnGatewayConnection {
     this.server.emit('message', `hello from server, ur msg is:${payload}`);
   }
 
-  private static disconnect(client: Socket) {
+  @SubscribeMessage('createRoom')
+  async onCreateRoom(client: Socket, room: Room) {
+    return this.roomService.createRoom(room, client.data.user);
+  }
+
+  private disconnect(client: Socket) {
     client.emit('Error', new UnauthorizedException());
     client.disconnect();
   }

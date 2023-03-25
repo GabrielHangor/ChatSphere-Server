@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './model/user.entity';
-import { Repository } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { CreateUserDto } from './model/dto/create-user.dto';
 import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { LoginUserDto } from './model/dto/login-user.dto';
@@ -59,6 +59,7 @@ export class UserService {
     if (!isPasswordValid) {
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
     }
+
     const { password, ...userWithoutPassword } = foundUser;
     const jwt = await this.authService.generateJwt(userWithoutPassword);
 
@@ -72,6 +73,13 @@ export class UserService {
 
   public findOne(id: number) {
     return this.userRepository.findOneOrFail({ where: { id } });
+  }
+
+  public findAllByUserName(username: string) {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .where('LOWER(user.username) LIKE :username', { username: `%${username.toLowerCase()}%` })
+      .getMany();
   }
 
   private findByEmail(email: string) {

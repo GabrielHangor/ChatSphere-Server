@@ -7,10 +7,11 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 import { AuthService } from './../auth/auth.service';
-import { User } from './../user/model/user.entity';
 import { UserService } from './../user/user.service';
 import { RoomService } from './room.service';
 import { Room } from './model/room.entity';
+import { TPage } from 'src/common/model/common.types';
+import { ChatEvent } from './model/chat.types';
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection {
@@ -28,11 +29,7 @@ export class ChatGateway implements OnGatewayConnection {
     try {
       const decodedToken = await this.authService.verifyJwt(client.handshake.headers.authorization);
       const user = await this.userService.findOne(decodedToken.user.id);
-
       client.data.user = user;
-
-      const rooms = await this.roomService.getRoomsListForUser(user.id, { page: 1, limit: 10 });
-      this.server.to(client.id).emit('rooms', rooms);
     } catch (e) {
       this.disconnect(client);
     }
@@ -42,18 +39,25 @@ export class ChatGateway implements OnGatewayConnection {
     console.log('user disconnected');
   }
 
-  @SubscribeMessage('message')
+  @SubscribeMessage(ChatEvent.MESSAGE)
   handleMessage(client: Socket, payload: any) {
-    this.server.emit('message', `hello from server, ur msg is:${payload}`);
+    this.server.emit(ChatEvent.MESSAGE, `hello from server, ur msg is:${payload}`);
   }
 
-  @SubscribeMessage('createRoom')
+  @SubscribeMessage(ChatEvent.CREATE_ROOM)
   async onCreateRoom(client: Socket, room: Room) {
     return this.roomService.createRoom(room, client.data.user);
   }
 
+  @SubscribeMessage(ChatEvent.PAGINATE_ROOM)
+  async onPaginateRoom(client: Socket, page: TPage) {
+    page.limit = page.limit > 100 ? 100 : page.limit;
+    const rooms = await this.roomService.getRoomsListForUser(client.data.user.id, page);
+    this.server.to(client.id).emit(ChatEvent.PAGINATE_ROOM, rooms);
+  }
+
   private disconnect(client: Socket) {
-    client.emit('Error', new UnauthorizedException());
+    client.emit(ChatEvent.ERROR, new UnauthorizedException());
     client.disconnect();
   }
 }

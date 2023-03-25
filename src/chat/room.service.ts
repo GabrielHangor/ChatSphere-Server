@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Room } from './model/room.entity';
 import { Repository } from 'typeorm';
 import { User } from './../user/model/user.entity';
-import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
+import {  paginate } from 'nestjs-typeorm-paginate';
+import { TPage } from 'src/common/model/common.types';
 
 @Injectable()
 export class RoomService {
@@ -14,11 +15,13 @@ export class RoomService {
     return this.roomRepository.save(newRoom);
   }
 
-  public async getRoomsListForUser(userId: number, options: IPaginationOptions) {
+  public async getRoomsListForUser(userId: number, options: TPage) {
     const query = this.roomRepository
       .createQueryBuilder('room')
       .leftJoin('room.users', 'user')
-      .where('user.id = :userId', { userId });
+      .where('user.id = :userId', { userId })
+      .leftJoinAndSelect('room.users', 'allUsers')
+      .orderBy('room.updatedAt', 'DESC');
 
     return paginate(query, options);
   }

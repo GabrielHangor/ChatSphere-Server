@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Room } from './model/room.entity';
 import { Repository } from 'typeorm';
 import { User } from './../user/model/user.entity';
-import {  paginate } from 'nestjs-typeorm-paginate';
+import { paginate } from 'nestjs-typeorm-paginate';
 import { TPage } from 'src/common/model/common.types';
 
 @Injectable()
@@ -20,7 +20,6 @@ export class RoomService {
       .createQueryBuilder('room')
       .leftJoin('room.users', 'user')
       .where('user.id = :userId', { userId })
-      .leftJoinAndSelect('room.users', 'allUsers')
       .orderBy('room.updatedAt', 'DESC');
 
     return paginate(query, options);

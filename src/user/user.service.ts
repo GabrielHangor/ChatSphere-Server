@@ -75,10 +75,12 @@ export class UserService {
     return this.userRepository.findOneOrFail({ where: { id } });
   }
 
-  public findAllByUserName(username: string) {
+  public findAllByUserName(username: string, id: number) {
     return this.userRepository
       .createQueryBuilder('user')
       .where('LOWER(user.username) LIKE :username', { username: `%${username.toLowerCase()}%` })
+      .andWhere('user.id <> :id', { id: id })
+      .orderBy('LOWER(user.username)', 'ASC')
       .getMany();
   }
 

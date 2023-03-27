@@ -46,7 +46,17 @@ export class ChatGateway implements OnGatewayConnection {
 
   @SubscribeMessage(ChatEvent.CREATE_ROOM)
   async onCreateRoom(client: Socket, room: Room) {
-    return this.roomService.createRoom(room, client.data.user);
+    await this.roomService.createRoom(room, client.data.user);
+
+    const connectedClients = await this.server.fetchSockets();
+
+    for (const connectedClient of connectedClients) {
+      const rooms = await this.roomService.getRoomsListForUser(connectedClient.data.user.id, {
+        limit: 10,
+        page: 1,
+      });
+      this.server.to(connectedClient.id).emit(ChatEvent.PAGINATE_ROOM, rooms);
+    }
   }
 
   @SubscribeMessage(ChatEvent.PAGINATE_ROOM)

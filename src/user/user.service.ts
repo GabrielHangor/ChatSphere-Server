@@ -7,6 +7,7 @@ import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { LoginUserDto } from './model/dto/login-user.dto';
 import { AuthService } from './../auth/auth.service';
 import { JWT_LIFESPAN_MS } from './../auth/auth.constants';
+import { IUser } from './model/user.types';
 
 @Injectable()
 export class UserService {
@@ -20,22 +21,22 @@ export class UserService {
     return paginate<User>(this.userRepository, options);
   }
 
-  async create(createUserDto: CreateUserDto) {
-    const foundUserByEmail = await this.findByEmail(createUserDto.email);
-    const foundUserByUsername = await this.findByUserName(createUserDto.username);
+  async create(newUser: IUser) {
+    const foundUserByEmail = await this.findByEmail(newUser.email);
+    const foundUserByUsername = await this.findByUserName(newUser.username);
 
     if (foundUserByEmail) {
-      throw new HttpException(`Email ${createUserDto.email} already exists`, HttpStatus.CONFLICT);
+      throw new HttpException(`Email ${newUser.email} already exists`, HttpStatus.CONFLICT);
     }
 
     if (foundUserByUsername) {
-      throw new HttpException(`Username ${createUserDto.username} already exists`, HttpStatus.CONFLICT);
+      throw new HttpException(`Username ${newUser.username} already exists`, HttpStatus.CONFLICT);
     }
 
-    const hashedPassword = await this.authService.hashPassword(createUserDto.password);
+    const hashedPassword = await this.authService.hashPassword(newUser.password);
 
     const createdUser = this.userRepository.create({
-      ...createUserDto,
+      ...newUser,
       password: hashedPassword,
     });
 
@@ -44,17 +45,14 @@ export class UserService {
     return createdUserWithoutPassword;
   }
 
-  async login(loginUserDto: LoginUserDto) {
-    const foundUser = await this.findByEmail(loginUserDto.email);
+  async login(user: IUser) {
+    const foundUser = await this.findByEmail(user.email);
 
     if (!foundUser) {
       throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
     }
 
-    const isPasswordValid = await this.authService.validatePassword(
-      loginUserDto.password,
-      foundUser.password
-    );
+    const isPasswordValid = await this.authService.validatePassword(user.password, foundUser.password);
 
     if (!isPasswordValid) {
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);

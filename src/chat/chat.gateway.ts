@@ -11,7 +11,8 @@ import { UserService } from './../user/user.service';
 import { RoomService } from './room.service';
 import { Room } from './model/room.entity';
 import { TPage } from 'src/common/model/common.types';
-import { ChatEvent } from './model/chat.types';
+import { ChatEvent, IConnectedUser, IRoom } from './model/chat.types';
+import { ConnectedUserService } from './connected-user.service';
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection {
@@ -20,7 +21,8 @@ export class ChatGateway implements OnGatewayConnection {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
-    private readonly roomService: RoomService
+    private readonly roomService: RoomService,
+    private readonly connectedUserService: ConnectedUserService
   ) {}
 
   async handleConnection(client: Socket) {
@@ -30,13 +32,16 @@ export class ChatGateway implements OnGatewayConnection {
       const decodedToken = await this.authService.verifyJwt(client.handshake.headers.authorization);
       const user = await this.userService.findOne(decodedToken.user.id);
       client.data.user = user;
+      // await this.connectedUserService.saveConnection({ socketId: client.id, user });
     } catch (e) {
       this.disconnect(client);
     }
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
     console.log('user disconnected');
+    // await this.connectedUserService.deleteBySocketId(client.id);
+    client.disconnect();
   }
 
   @SubscribeMessage(ChatEvent.MESSAGE)
@@ -45,17 +50,25 @@ export class ChatGateway implements OnGatewayConnection {
   }
 
   @SubscribeMessage(ChatEvent.CREATE_ROOM)
-  async onCreateRoom(client: Socket, room: Room) {
-    await this.roomService.createRoom(room, client.data.user);
+  async onCreateRoom(client: Socket, room: IRoom) {
+    try {
+      await this.roomService.createRoom(room, client.data.user);
+      const users = room.users;
 
-    const connectedClients = await this.server.fetchSockets();
+      const [connections, rooms] = await Promise.all([
+        Promise.all(users.map((user) => this.connectedUserService.findByUser(user))),
+        Promise.all(
+          users.map((user) => this.roomService.getRoomsListForUser(user.id, { page: 1, limit: 10 }))
+        ),
+      ]);
 
-    for (const connectedClient of connectedClients) {
-      const rooms = await this.roomService.getRoomsListForUser(connectedClient.data.user.id, {
-        limit: 10,
-        page: 1,
+      connections.forEach((connection, index) => {
+        connection.forEach((connectedUser) => {
+          this.server.to(connectedUser.socketId).emit(ChatEvent.PAGINATE_ROOM, rooms[index]);
+        });
       });
-      this.server.to(connectedClient.id).emit(ChatEvent.PAGINATE_ROOM, rooms);
+    } catch (error) {
+      console.error(error);
     }
   }
 

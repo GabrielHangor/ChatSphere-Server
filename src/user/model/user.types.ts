@@ -11,3 +11,11 @@ export interface ILoginUserResponse {
 export interface RequestModel extends Request {
   user: User;
 }
+
+
+export interface IUser {
+  id?: number;
+  username?: string;
+  email: string;
+  password?: string;
+}

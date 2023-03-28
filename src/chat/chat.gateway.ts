@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { OnModuleInit, UnauthorizedException } from '@nestjs/common';
 import {
   OnGatewayConnection,
   SubscribeMessage,
@@ -9,13 +9,14 @@ import { Socket, Server } from 'socket.io';
 import { AuthService } from './../auth/auth.service';
 import { UserService } from './../user/user.service';
 import { RoomService } from './room.service';
-import { Room } from './model/room.entity';
+
 import { TPage } from 'src/common/model/common.types';
-import { ChatEvent, IConnectedUser, IRoom } from './model/chat.types';
+import { ChatEvent, IRoom } from './model/chat.types';
 import { ConnectedUserService } from './connected-user.service';
+import { OnGatewayDisconnect } from '@nestjs/websockets/interfaces/hooks';
 
 @WebSocketGateway({ cors: true })
-export class ChatGateway implements OnGatewayConnection {
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
   @WebSocketServer() server: Server;
 
   constructor(
@@ -25,6 +26,10 @@ export class ChatGateway implements OnGatewayConnection {
     private readonly connectedUserService: ConnectedUserService
   ) {}
 
+  async onModuleInit() {
+    await this.connectedUserService.deleteAll();
+  }
+
   async handleConnection(client: Socket) {
     console.log('user connected');
 
@@ -32,7 +37,7 @@ export class ChatGateway implements OnGatewayConnection {
       const decodedToken = await this.authService.verifyJwt(client.handshake.headers.authorization);
       const user = await this.userService.findOne(decodedToken.user.id);
       client.data.user = user;
-      // await this.connectedUserService.saveConnection({ socketId: client.id, user });
+      await this.connectedUserService.saveConnection({ socketId: client.id, user });
     } catch (e) {
       this.disconnect(client);
     }
@@ -40,7 +45,7 @@ export class ChatGateway implements OnGatewayConnection {
 
   async handleDisconnect(client: Socket) {
     console.log('user disconnected');
-    // await this.connectedUserService.deleteBySocketId(client.id);
+    await this.connectedUserService.deleteBySocketId(client.id);
     client.disconnect();
   }
 

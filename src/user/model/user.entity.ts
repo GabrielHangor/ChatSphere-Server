@@ -1,5 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, BeforeInsert, Column, ManyToMany, BeforeUpdate } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  BeforeInsert,
+  Column,
+  ManyToMany,
+  BeforeUpdate,
+  OneToMany,
+} from 'typeorm';
 import { Room } from './../../chat/model/room.entity';
+import { ConnectedUser } from './../../chat/model/connected-user.entity';
 
 @Entity()
 export class User {
@@ -17,6 +26,9 @@ export class User {
 
   @ManyToMany(() => Room, (room) => room.users)
   rooms: Room[];
+
+  @OneToMany(() => ConnectedUser, (connection) => connection.user)
+  connections: ConnectedUser[];
 
   @BeforeInsert()
   @BeforeUpdate()

@@ -16,14 +16,13 @@ export class RoomService {
     return this.roomRepository.save(newRoom);
   }
 
-  public async getRoomsListForUser(userId: number, options: TPage) {
+  async getRoomsListForUser(userId: number, options: TPage) {
     const query = this.roomRepository
-    .createQueryBuilder('room')
-    .leftJoin('room.users', 'users')
-    .where('users.id = :userId', { userId })
-    .select(['room', 'COUNT(users.id) as userCount'])
-    .groupBy('room.id')
-    .orderBy('room.updatedAt', 'DESC')
+      .createQueryBuilder('room')
+      .leftJoin('room.users', 'users')
+      .where('users.id = :userId', { userId })
+      .leftJoinAndSelect('room.users', 'all_users')
+      .orderBy('room.updatedAt', 'DESC');
 
     return paginate(query, options);
   }

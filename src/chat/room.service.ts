@@ -24,7 +24,17 @@ export class RoomService {
       .leftJoinAndSelect('room.users', 'all_users')
       .orderBy('room.updatedAt', 'DESC');
 
-    return paginate(query, options);
+    const rooms = await paginate(query, options);
+
+    const totalItems = await this.roomRepository
+      .createQueryBuilder('room')
+      .leftJoin('room.users', 'users')
+      .where('users.id = :userId', { userId })
+      .getCount();
+
+    rooms.meta.totalItems = totalItems;
+
+    return rooms;
   }
 
   private async addCreatorToRoom(room: IRoom, creator: IUser) {

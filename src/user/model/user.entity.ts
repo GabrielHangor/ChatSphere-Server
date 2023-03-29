@@ -9,6 +9,8 @@ import {
 } from 'typeorm';
 import { Room } from './../../chat/model/room.entity';
 import { ConnectedUser } from './../../chat/model/connected-user.entity';
+import { JoinedRoom } from './../../chat/model/joined-room.entity';
+import { Message } from './../../chat/model/message.entity';
 
 @Entity()
 export class User {
@@ -29,6 +31,12 @@ export class User {
 
   @OneToMany(() => ConnectedUser, (connection) => connection.user)
   connections: ConnectedUser[];
+
+  @OneToMany(() => JoinedRoom, (joinedRoom) => joinedRoom.room)
+  joinedRooms: JoinedRoom[];
+
+  @OneToMany(() => Message, (message) => message.user)
+  messages: Message[];
 
   @BeforeInsert()
   @BeforeUpdate()

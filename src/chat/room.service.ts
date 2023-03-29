@@ -16,6 +16,10 @@ export class RoomService {
     return this.roomRepository.save(newRoom);
   }
 
+  public async getRoomById(roomId: number) {
+    return this.roomRepository.findOne({ where: { id: roomId }, relations: ['users'] });
+  }
+
   async getRoomsListForUser(userId: number, options: TPage) {
     const query = this.roomRepository
       .createQueryBuilder('room')

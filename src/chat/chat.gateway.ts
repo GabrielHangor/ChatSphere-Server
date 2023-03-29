@@ -14,6 +14,8 @@ import { TPage } from 'src/common/model/common.types';
 import { ChatEvent, IRoom } from './model/chat.types';
 import { ConnectedUserService } from './connected-user.service';
 import { OnGatewayDisconnect } from '@nestjs/websockets/interfaces/hooks';
+import { JoinedRoomService } from './joined-room.service';
+import { MessageService } from './message.service';
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
@@ -23,11 +25,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly roomService: RoomService,
-    private readonly connectedUserService: ConnectedUserService
+    private readonly connectedUserService: ConnectedUserService,
+    private readonly joinedRoomService: JoinedRoomService,
+    private readonly messageService: MessageService
   ) {}
 
   async onModuleInit() {
     await this.connectedUserService.deleteAll();
+    await this.joinedRoomService.deleteAll();
   }
 
   async handleConnection(client: Socket) {

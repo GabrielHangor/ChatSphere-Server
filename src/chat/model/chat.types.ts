@@ -1,4 +1,3 @@
-import { User } from 'src/user/model/user.entity';
 import { IUser } from './../../user/model/user.types';
 
 export enum ChatEvent {
@@ -12,7 +11,7 @@ export enum ChatEvent {
 export interface IConnectedUser {
   id?: number;
   socketId: string;
-  user: User;
+  user: IUser;
 }
 
 export interface IRoom {
@@ -22,4 +21,20 @@ export interface IRoom {
   users?: IUser[];
   created_at?: Date;
   updated_at?: Date;
+}
+
+export interface IJoinedRoom {
+  id?: number;
+  socketId: string;
+  user: IUser;
+  room: IRoom;
+}
+
+export interface IMessage {
+  id?: number;
+  text: string;
+  user: IUser;
+  room: IRoom;
+  createdAt: Date;
+  updatedAt: Date;
 }

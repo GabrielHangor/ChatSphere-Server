@@ -11,11 +11,12 @@ import { UserService } from './../user/user.service';
 import { RoomService } from './room.service';
 
 import { TPage } from 'src/common/model/common.types';
-import { ChatEvent, IRoom } from './model/chat.types';
+import { ChatEvent, IMessage, IRoom } from './model/chat.types';
 import { ConnectedUserService } from './connected-user.service';
 import { OnGatewayDisconnect } from '@nestjs/websockets/interfaces/hooks';
 import { JoinedRoomService } from './joined-room.service';
 import { MessageService } from './message.service';
+
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
@@ -35,6 +36,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     await this.joinedRoomService.deleteAll();
   }
 
+  // CONNECTION
   async handleConnection(client: Socket) {
     console.log('user connected');
 
@@ -54,11 +56,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     client.disconnect();
   }
 
-  @SubscribeMessage(ChatEvent.MESSAGE)
-  handleMessage(client: Socket, payload: any) {
-    this.server.emit(ChatEvent.MESSAGE, `hello from server, ur msg is:${payload}`);
-  }
-
+  // ROOMS
   @SubscribeMessage(ChatEvent.CREATE_ROOM)
   async onCreateRoom(client: Socket, room: IRoom) {
     try {
@@ -82,11 +80,31 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     }
   }
 
+  @SubscribeMessage(ChatEvent.JOIN_ROOM)
+  async onJoinRoom(client: Socket, room: IRoom) {
+    const messages = await this.messageService.findByRoom(room, { limit: 10, page: 1 });
+    await this.joinedRoomService.create({ socketId: client.id, room, user: client.data.user });
+    this.server.to(client.id).emit(ChatEvent.MESSAGES, messages);
+  }
+
+  @SubscribeMessage(ChatEvent.LEAVE_ROOM)
+  async onLeaveRoom(client: Socket) {
+    await this.joinedRoomService.deleteBySocketId(client.id);
+  }
+
   @SubscribeMessage(ChatEvent.PAGINATE_ROOM)
   async onPaginateRoom(client: Socket, page: TPage) {
     page.limit = page.limit > 100 ? 100 : page.limit;
     const rooms = await this.roomService.getRoomsListForUser(client.data.user.id, page);
     this.server.to(client.id).emit(ChatEvent.PAGINATE_ROOM, rooms);
+  }
+
+  @SubscribeMessage(ChatEvent.ADD_MESSAGE)
+  async onAddMessage(client: Socket, message: IMessage) {
+    const createdMessage = await this.messageService.create({ ...message, user: client.data.user });
+    const room = await this.roomService.getRoomById(createdMessage.room.id);
+    const joinedUsers = await this.joinedRoomService.findByRoom(room);
+    // send newly created message to all users of the room who are online
   }
 
   private disconnect(client: Socket) {

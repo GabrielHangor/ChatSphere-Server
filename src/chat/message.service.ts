@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Message } from './model/message.entity';
-import { IMessage } from './../../dist/src/chat/model/chat.types.d';
-import { IRoom } from './model/chat.types';
+import { IMessage, IRoom } from './model/chat.types';
 import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 
 @Injectable()

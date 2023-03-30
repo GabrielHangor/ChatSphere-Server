@@ -2,10 +2,13 @@ import { IUser } from './../../user/model/user.types';
 
 export enum ChatEvent {
   ERROR = 'Error',
-  MESSAGE = 'message',
+  MESSAGES = 'messages',
+  ADD_MESSAGE = 'addMessage',
   GET_ROOMS = 'rooms',
   CREATE_ROOM = 'createRoom',
   PAGINATE_ROOM = 'paginateRoom',
+  JOIN_ROOM = 'joinRoom',
+  LEAVE_ROOM = 'leaveRoom',
 }
 
 export interface IConnectedUser {

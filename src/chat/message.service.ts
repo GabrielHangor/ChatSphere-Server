@@ -14,6 +14,13 @@ export class MessageService {
   }
 
   async findByRoom(room: IRoom, options: IPaginationOptions) {
-    return paginate(this.messageRepository, options, { where: { room }, relations: ['user', 'room'] });
+    const query = this.messageRepository
+      .createQueryBuilder('message')
+      .leftJoin('message.room', 'room')
+      .where('room.id = :roomId', { roomId: room.id })
+      .leftJoinAndSelect('message.user', 'user')
+      .orderBy('message.createdAt', 'ASC');
+
+    return paginate(query, options);
   }
 }

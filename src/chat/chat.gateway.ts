@@ -17,7 +17,6 @@ import { OnGatewayDisconnect } from '@nestjs/websockets/interfaces/hooks';
 import { JoinedRoomService } from './joined-room.service';
 import { MessageService } from './message.service';
 
-
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
   @WebSocketServer() server: Server;
@@ -53,6 +52,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   async handleDisconnect(client: Socket) {
     console.log('user disconnected');
     await this.connectedUserService.deleteBySocketId(client.id);
+    await this.joinedRoomService.deleteBySocketId(client.id);
     client.disconnect();
   }
 
@@ -82,7 +82,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
   @SubscribeMessage(ChatEvent.JOIN_ROOM)
   async onJoinRoom(client: Socket, room: IRoom) {
-    const messages = await this.messageService.findByRoom(room, { limit: 10, page: 1 });
+    const messages = await this.messageService.findByRoom(room, { limit: 100, page: 1 });
     await this.joinedRoomService.create({ socketId: client.id, room, user: client.data.user });
     this.server.to(client.id).emit(ChatEvent.MESSAGES, messages);
   }
@@ -102,9 +102,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   @SubscribeMessage(ChatEvent.ADD_MESSAGE)
   async onAddMessage(client: Socket, message: IMessage) {
     const createdMessage = await this.messageService.create({ ...message, user: client.data.user });
+
     const room = await this.roomService.getRoomById(createdMessage.room.id);
+
     const joinedUsers = await this.joinedRoomService.findByRoom(room);
-    // send newly created message to all users of the room who are online
+
+    for (const user of joinedUsers) {
+      this.server.to(user.socketId).emit(ChatEvent.ADD_MESSAGE, createdMessage);
+    }
   }
 
   private disconnect(client: Socket) {

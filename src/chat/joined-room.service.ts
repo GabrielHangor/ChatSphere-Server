@@ -20,7 +20,10 @@ export class JoinedRoomService {
   }
 
   async findByRoom(room: IRoom) {
-    return this.joinedRoomRepository.find({ where: { room } });
+    return this.joinedRoomRepository
+      .createQueryBuilder('joinedRoom')
+      .where('joinedRoom.roomId = :roomId', { roomId: room.id.toString() })
+      .getMany();
   }
 
   async deleteBySocketId(socketId: string) {

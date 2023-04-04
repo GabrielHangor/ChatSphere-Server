@@ -9,13 +9,12 @@ import { Socket, Server } from 'socket.io';
 import { AuthService } from './../auth/auth.service';
 import { UserService } from './../user/user.service';
 import { RoomService } from './room.service';
-
-import { TPage } from 'src/common/model/common.types';
 import { ChatEvent, IMessage, IRoom } from './model/chat.types';
 import { ConnectedUserService } from './connected-user.service';
 import { OnGatewayDisconnect } from '@nestjs/websockets/interfaces/hooks';
 import { JoinedRoomService } from './joined-room.service';
 import { MessageService } from './message.service';
+import { TPage } from '../common/model/common.types';
 
 @WebSocketGateway({ cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {

@@ -8,7 +8,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { User } from 'src/user/model/user.entity';
+import { User } from './../../user/model/user.entity';
 import { Room } from './room.entity';
 
 @Entity()

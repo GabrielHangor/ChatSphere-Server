@@ -6,7 +6,7 @@ async function bootstrap() {
   const PORT = process.env.PORT || 3000;
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors({ origin: 'https://gabrielhangor.github.io/ChatSphere-Client', methods: '*' });
+  app.enableCors({ origin: 'https://gabrielhangor.github.io', methods: '*' });
 
   app.useGlobalPipes(
     new ValidationPipe({

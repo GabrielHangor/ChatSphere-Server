@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JoinedRoom } from './model/joined-room.entity';
-import { Repository } from 'typeorm';
 import { IJoinedRoom, IRoom } from './model/chat.types';
 import { IUser } from './../user/model/user.types';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class JoinedRoomService {

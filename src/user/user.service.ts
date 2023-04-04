@@ -1,13 +1,13 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './model/user.entity';
-import { Repository, Like } from 'typeorm';
 import { CreateUserDto } from './model/dto/create-user.dto';
 import { IPaginationOptions, paginate } from 'nestjs-typeorm-paginate';
 import { LoginUserDto } from './model/dto/login-user.dto';
 import { AuthService } from './../auth/auth.service';
 import { JWT_LIFESPAN_MS } from './../auth/auth.constants';
 import { IUser } from './model/user.types';
+import { Repository, Like } from 'typeorm';
 
 @Injectable()
 export class UserService {

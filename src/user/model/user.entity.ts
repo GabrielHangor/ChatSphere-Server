@@ -1,3 +1,8 @@
+import { Room } from './../../chat/model/room.entity';
+import { ConnectedUser } from './../../chat/model/connected-user.entity';
+import { JoinedRoom } from './../../chat/model/joined-room.entity';
+import { Message } from './../../chat/model/message.entity';
+
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,11 +12,6 @@ import {
   BeforeUpdate,
   OneToMany,
 } from 'typeorm';
-import { Room } from './../../chat/model/room.entity';
-import { ConnectedUser } from './../../chat/model/connected-user.entity';
-import { JoinedRoom } from './../../chat/model/joined-room.entity';
-import { Message } from './../../chat/model/message.entity';
-
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()

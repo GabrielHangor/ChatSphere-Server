@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Room } from './model/room.entity';
-import { Repository } from 'typeorm';
 import { paginate } from 'nestjs-typeorm-paginate';
 import { TPage } from '../common/model/common.types';
 import { IRoom } from './model/chat.types';
 import { IUser } from './../user/model/user.types';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class RoomService {

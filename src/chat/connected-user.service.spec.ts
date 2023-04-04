@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConnectedUserService } from './connected-user/connected-user.servicee';
+import { ConnectedUserService } from './connected-user.service';
+
 
 describe('ConnectedUserService', () => {
   let service: ConnectedUserService;

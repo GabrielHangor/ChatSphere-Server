@@ -3,7 +3,7 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './model/dto/create-user.dto';
 import { LoginUserDto } from './model/dto/login-user.dto';
 import { JwtAuthGuard } from './../auth/guards/jwt.guard';
-import { CustomReq } from 'src/common/model/common.types';
+import { CustomReq } from '../common/model/common.types';
 
 @Controller('users')
 export class UserController {
